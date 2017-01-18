@@ -379,6 +379,40 @@ void ClipOp(const NDArray &src,
   }
 }
 
+void TruncOp(const NDArray &src, const real_t &thresh, NDArray *out) {
+  if (out->is_none()) {
+    *out = NDArray(src.shape(), src.ctx(), true, src.dtype());
+  } else {
+    CHECK(out->ctx() == src.ctx()) << "target context mismatch";
+    CHECK(out->shape() == src.shape()) << "target shape mismatch";
+  }
+  NDArray ret = *out;
+  std::vector<Engine::VarHandle> const_vars;
+  if (src.var() != ret.var()) const_vars.push_back(src.var());
+  switch (src.ctx().dev_mask()) {
+    case cpu::kDevMask: {
+      Engine::Get()->PushSync([src, thresh, ret](RunContext ctx) {
+          ret.CheckAndAlloc();
+          TBlob tmp = ret.data();
+          ndarray::EvalTrunc<cpu>(src.data(), thresh, &tmp, ctx);
+        }, src.ctx(), const_vars, {ret.var()});
+      break;
+    }
+    #if MXNET_USE_CUDA
+    case gpu::kDevMask: {
+      Engine::Get()->PushSync([src, thresh, ret](RunContext ctx) {
+          ret.CheckAndAlloc();
+          TBlob tmp = ret.data();
+          ndarray::EvalTrunc<gpu>(src.data(), thresh, &tmp, ctx);
+        }, src.ctx(), const_vars, {ret.var()});
+      break;
+    }
+    #endif
+    default: LOG(FATAL) << MXNET_GPU_NOT_ENABLED_ERROR;
+  }
+}
+
+
 inline void CopyFromToSimple(const NDArray &from, NDArray *to) {
   CopyFromTo(from, to, 0);
 }
@@ -777,6 +811,19 @@ MXNET_REGISTER_NDARRAY_FUN(clip)
 .add_argument("src", "NDArray", "Source input")
 .add_argument("a_min", "real_t", "Minimum value")
 .add_argument("a_max", "real_t", "Maximum value");
+
+MXNET_REGISTER_NDARRAY_FUN(trunc)
+.set_type_mask(kNDArrayArgBeforeScalar | kAcceptEmptyMutateTarget)
+.set_body([](NDArray **u, real_t *s, NDArray **out,
+             int num_params, char **param_keys, char **param_vals) {
+    TruncOp(*u[0], s[0], out[0]);
+  })
+.set_num_use_vars(1)
+.set_num_scalars(1)
+.set_num_mutate_vars(1)
+.describe("Truncate ndarray elements by thresh")
+.add_argument("src", "NDArray", "Source input")
+.add_argument("thresh", "real_t", "truncate value");
 
 void Imdecode(NDArray *ret, NDArray mean, size_t index,
               size_t x0, size_t y0, size_t x1, size_t y1, size_t n_channels,

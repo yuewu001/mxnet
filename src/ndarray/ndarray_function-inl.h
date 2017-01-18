@@ -144,6 +144,19 @@ void EvalClip<DEVICE>(const TBlob &src, const real_t &a_min, const real_t &a_max
 }
 
 template<>
+void EvalTrunc<DEVICE>(const TBlob &src, const real_t &thresh, TBlob *ret, RunContext ctx) {
+  typedef DEVICE xpu;
+  using namespace mshadow::expr;
+  mshadow::Stream<xpu> *s = ctx.get_stream<xpu>();
+  CHECK_EQ(ret->type_flag_, src.type_flag_)
+    << "Only support input/output with the same data type";
+  MSHADOW_TYPE_SWITCH(ret->type_flag_, DType, {
+    ret->FlatTo1D<xpu, DType>(s)
+      = F<Trunc::mshadow_op>(src.FlatTo1D<xpu, DType>(s), scalar(DType(thresh)));
+  });
+}
+
+template<>
 void EvalRandom<DEVICE, UniformDistribution>(
     const real_t &a,
     const real_t &b,

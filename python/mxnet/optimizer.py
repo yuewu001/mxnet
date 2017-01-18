@@ -5,7 +5,7 @@ import ctypes
 from .base import _LIB, check_call
 from .base import c_array, mx_uint, mx_float, c_str
 from .base import OptimizerHandle, OptimizerCreator
-from .ndarray import NDArray, zeros, clip, sqrt, square
+from .ndarray import NDArray, zeros, clip, sqrt, square, trunc
 from .random import normal
 
 
@@ -307,6 +307,92 @@ class SGD(Optimizer):
         else:
             assert self.momentum == 0.0
             weight[:] += -lr * (grad + wd * weight)
+
+
+@register
+class STG(Optimizer):
+    """SGD with Truncated Gradient .
+
+    Parameters
+    ----------
+    momentum : float, optional
+       momentum value
+
+    trunc_threshs : float/dict, optional
+        truncate thresholds for neuroweighting layer
+    """
+    def __init__(self, momentum=0.0, trunc_threshs = 0.0, **kwargs):
+        super(STG, self).__init__(**kwargs)
+        assert(self.idx2name is not None and  len(self.idx2name) != 0)
+
+        self.trunc_threshs = {}
+
+        if isinstance(trunc_threshs, float):
+            for param_id, param_name  in self.idx2name.iteritems():
+                if param_name.endswith('_weights'):
+                    self.trunc_threshs[param_id] = trunc_threshs
+        elif isinstance(trunc_threshs, dict):
+            for param_id, param_name  in self.idx2name.iteritems():
+                if param_name in trunc_threshs:
+                    self.trunc_threshs[param_id] = trunc_threshs[param_name]
+
+        self.momentum = momentum
+
+    def create_state(self, index, weight):
+        """Create additional optimizer state such as momentum.
+
+        Parameters
+        ----------
+        weight : NDArray
+            The weight data
+
+        """
+        if self.momentum == 0.0:
+            return None
+        else:
+            return zeros(weight.shape, weight.context, dtype=weight.dtype)
+
+    def update(self, index, weight, grad, state):
+        """Update the parameters.
+
+        Parameters
+        ----------
+        index : int
+            An unique integer key used to index the parameters
+
+        weight : NDArray
+            weight ndarray
+
+        grad : NDArray
+            grad ndarray
+
+        state : NDArray or other objects returned by init_state
+            The auxiliary state used in optimization.
+        """
+        assert(isinstance(weight, NDArray))
+        assert(isinstance(grad, NDArray))
+        lr = self._get_lr(index)
+        wd = self._get_wd(index)
+        self._update_count(index)
+
+        grad = grad * self.rescale_grad
+        if self.clip_gradient is not None:
+            grad = clip(grad, -self.clip_gradient, self.clip_gradient)
+
+        #truncate
+        if index in self.trunc_threshs:
+            assert len(weight.shape) == 1
+            weight[:] += -lr * (grad + wd * weight)
+            weight[:] = trunc(weight, lr * self.trunc_threshs[index])
+        else:
+            if state:
+                mom = state
+                mom[:] *= self.momentum
+                mom[:] += -lr * (grad + wd * weight)
+                weight[:] += mom
+            else:
+                assert self.momentum == 0.0
+                weight[:] += -lr * (grad + wd * weight)
 
 
 @register
