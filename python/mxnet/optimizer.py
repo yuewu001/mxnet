@@ -382,7 +382,9 @@ class STG(Optimizer):
         #truncate
         if index in self.trunc_threshs:
             assert len(weight.shape) == 1
-            weight[:] += -lr * (grad + wd * weight)
+            #weight[:] += -lr * (grad + wd * weight)
+            weight[:] += -lr * grad
+            weight[:] = clip(weight, -1, 1)
             weight[:] = trunc(weight, lr * self.trunc_threshs[index])
         else:
             if state:

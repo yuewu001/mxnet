@@ -25,13 +25,13 @@ def _get_lr_scheduler(args, kv):
 def _load_model(args, rank=0):
     if 'load_epoch' not in args or args.load_epoch is None:
         return (None, None, None)
-    assert args.model_prefix is not None
-    model_prefix = args.model_prefix
-    if rank > 0 and os.path.exists("%s-%d-symbol.json" % (model_prefix, rank)):
-        model_prefix += "-%d" % (rank)
+    assert args.pretrain is not None
+    pretrain = args.pretrain
+    if rank > 0 and os.path.exists("%s-%d-symbol.json" % (pretrain, rank)):
+        pretrain += "-%d" % (rank)
     sym, arg_params, aux_params = mx.model.load_checkpoint(
-        model_prefix, args.load_epoch)
-    logging.info('Loaded model %s_%04d.params', model_prefix, args.load_epoch)
+        pretrain, args.load_epoch)
+    logging.info('Loaded model %s_%04d.params', pretrain, args.load_epoch)
     return (sym, arg_params, aux_params)
 
 def epoch_end(args, prefix, period=1):
@@ -56,9 +56,8 @@ def epoch_end(args, prefix, period=1):
         if 'trunc_threshs' in args:
             for arg_name, arg_val in arg.iteritems():
                 if arg_name.endswith('_weights'):
-                    logging.info("Epoch[%d] Sparsity of %s: %f", iter_no, arg_name,
-                                 float((arg_val.asnumpy()  == 0).sum()) /
-                                 np.prod(arg_val.shape))
+                    sparsity = float((arg_val.asnumpy()  == 0).sum()) / np.prod(arg_val.shape)
+                    logging.info("Epoch[%d] Sparsity of %s: %f", iter_no, arg_name, sparsity)
 
         #save checkpoint
         if (iter_no + 1) % period == 0:
@@ -106,10 +105,12 @@ def add_fit_args(parser):
                        help='the batch size')
     train.add_argument('--disp-batches', type=int, default=20,
                        help='show progress for every n batches')
-    train.add_argument('--model-prefix', type=str,
-                       help='model prefix')
+    train.add_argument('--pretrain', type=str,
+                       help='pretrained model prefix')
     train.add_argument('--load-epoch', type=int,
                        help='load the model on an epoch using the model-load-prefix')
+    train.add_argument('--model-prefix', type=str,
+                       help='model prefix')
     train.add_argument('--top-k', type=int, default=0,
                        help='report the top-k accuracy. 0 means no report.')
     train.add_argument('--save-period', type=int, default=25,
