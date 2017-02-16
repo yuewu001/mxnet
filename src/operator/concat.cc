@@ -28,9 +28,10 @@ Operator* CreateOp<cpu>(ConcatParam param, int dtype) {
       break;
     }
   }
-  LOG(INFO) << MKLConcatOp<cpu, float>::getName() << " Skip MKL optimization";
+  if (enableMKLWarnGenerated())
+    LOG(INFO) << MKLConcatOp<cpu, float>::getName() << " Skip MKL optimization";
 #endif
-  MSHADOW_REAL_TYPE_SWITCH(dtype, DType, {
+  MSHADOW_TYPE_SWITCH(dtype, DType, {
     op = new ConcatOp<cpu, DType>(param);
   });
   return op;
@@ -38,10 +39,6 @@ Operator* CreateOp<cpu>(ConcatParam param, int dtype) {
 
 Operator* ConcatProp::CreateOperatorEx(Context ctx, std::vector<TShape> *in_shape,
                                        std::vector<int> *in_type) const {
-  std::vector<TShape> out_shape, aux_shape;
-  std::vector<int> out_type, aux_type;
-  CHECK(InferShape(in_shape, &out_shape, &aux_shape));
-  CHECK(InferType(in_type, &out_type, &aux_type));
   DO_BIND_DISPATCH(CreateOp, param_, in_type->at(0));
 }
 

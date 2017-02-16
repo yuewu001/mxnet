@@ -119,3 +119,5 @@ List of Contributors
 * [Chi Zhang](https://github.com/WellyZhang)
 * [Wei Wu](https://github.com/lazyparser)
 * [Shishi Duan](https://github.com/burness)
+* [Yu Du](https://github.com/Answeror)
+* [Xu Dong](https://github.com/dsqx71)

@@ -2,7 +2,7 @@
 
 Topics:
 * [Basic Push and Pull](#basic-push-and-pull)
-* [List Key-Value Pairs](#interface-for-list-key-value-pairs)
+* [List Key-Value Pairs](#list-key-value-pairs)
 * [API Reference](#api-reference)
 
 
@@ -13,7 +13,7 @@ Provides basic operation over multiple devices (GPUs) on a single device.
 ### Initialization
 
 Let's consider a simple example. It initializes
-a (`int`, `NDAarray`) pair into the store, and then pulls the value out.
+a (`int`, `NDArray`) pair into the store, and then pulls the value out.
 
 ```python
     >>> kv = mx.kv.create('local') # create a local kv store.
@@ -121,7 +121,7 @@ For multiple devices:
 
 ```eval_rst
     .. raw:: html
-   
+
         <script type="text/javascript" src='../../_static/js/auto_module_index.js'></script>
 ```
 

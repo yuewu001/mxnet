@@ -140,7 +140,9 @@ class SliceChannelProp : public OperatorProperty {
   std::vector<std::string> ListOutputs() const override {
     std::vector<std::string> ret;
     for (int i = 0; i < param_.num_outputs; ++i) {
-      ret.push_back(std::string("output") + static_cast<char>('0' + i));
+      std::ostringstream os;
+      os << "output" << i;
+      ret.push_back(os.str());
     }
     return ret;
   }
@@ -157,7 +159,7 @@ class SliceChannelProp : public OperatorProperty {
     TShape dshape = in_shape->at(slice_enum::kData);
     if (dshape.ndim() == 0) return false;
     if (param_.axis >= 0) {
-      CHECK_LT(param_.axis, dshape.ndim());
+      CHECK_LT(static_cast<size_t>(param_.axis), dshape.ndim());
     } else {
       CHECK_LT(param_.axis + dshape.ndim(), dshape.ndim());
     }

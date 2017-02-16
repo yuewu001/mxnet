@@ -51,7 +51,7 @@ def print_summary(symbol, shape=None, line_length=120, positions=[.44, .64, .74,
         interals = symbol.get_internals()
         _, out_shapes, _ = interals.infer_shape(**shape)
         if out_shapes is None:
-            raise ValueError("Input shape is incompete")
+            raise ValueError("Input shape is incomplete")
         shape_dict = dict(zip(interals.list_outputs(), out_shapes))
     conf = json.loads(symbol.tojson())
     nodes = conf["nodes"]
@@ -109,25 +109,25 @@ def print_summary(symbol, shape=None, line_length=120, positions=[.44, .64, .74,
                     if show_shape:
                         if input_node["op"] != "null":
                             key = input_name + "_output"
-                            shape = shape_dict[key][1:]
-                            pre_filter = pre_filter + int(shape[0])
                         else:
                             key = input_name
+                        if key in shape_dict:
                             shape = shape_dict[key][1:]
                             pre_filter = pre_filter + int(shape[0])
         cur_param = 0
         if op == 'Convolution':
             cur_param = pre_filter \
-                * int(_str2tuple(node["param"]["kernel"])[0]) \
-                * int(_str2tuple(node["param"]["kernel"])[1]) \
-                * int(node["param"]["num_filter"]) \
-                + int(node["param"]["num_filter"])
+                * int(_str2tuple(node["attr"]["kernel"])[0]) \
+                * int(_str2tuple(node["attr"]["kernel"])[1]) \
+                * int(node["attr"]["num_filter"]) \
+                + int(node["attr"]["num_filter"])
         elif op == 'FullyConnected':
-            cur_param = pre_filter * (int(node["param"]["num_hidden"]) + 1)
+            cur_param = pre_filter * (int(node["attr"]["num_hidden"]) + 1)
         elif op == 'BatchNorm':
             key = node["name"] + "_output"
-            num_filter = shape_dict[key][1]
-            cur_param = int(num_filter) * 2
+            if show_shape:
+                num_filter = shape_dict[key][1]
+                cur_param = int(num_filter) * 2
         if not pre_node:
             first_connection = ''
         else:
@@ -152,9 +152,9 @@ def print_summary(symbol, shape=None, line_length=120, positions=[.44, .64, .74,
             if show_shape:
                 if op != "null":
                     key = node["name"] + "_output"
-                    out_shape = shape_dict[key][1:]
                 else:
                     key = node["name"]
+                if key in shape_dict:
                     out_shape = shape_dict[key][1:]
         total_params += print_layer_summary(nodes[i], out_shape)
         if i == len(nodes) - 1:
@@ -205,7 +205,7 @@ def plot_network(symbol, title="plot", save_format='pdf', shape=None, node_attrs
         interals = symbol.get_internals()
         _, out_shapes, _ = interals.infer_shape(**shape)
         if out_shapes is None:
-            raise ValueError("Input shape is incompete")
+            raise ValueError("Input shape is incomplete")
         shape_dict = dict(zip(interals.list_outputs(), out_shapes))
     conf = json.loads(symbol.tojson())
     nodes = conf["nodes"]
@@ -235,7 +235,7 @@ def plot_network(symbol, title="plot", save_format='pdf', shape=None, node_attrs
         name = node["name"]
         # input data
         attr = copy.deepcopy(node_attr)
-        label = op
+        label = name
 
         if op == "null":
             if looks_like_weight(node["name"]):
@@ -249,24 +249,26 @@ def plot_network(symbol, title="plot", save_format='pdf', shape=None, node_attrs
             label = node["name"]
             attr["fillcolor"] = cm[0]
         elif op == "Convolution":
-            label = r"Convolution\n%sx%s/%s, %s" % (_str2tuple(node["param"]["kernel"])[0],
-                                                    _str2tuple(node["param"]["kernel"])[1],
-                                                    _str2tuple(node["param"]["stride"])[0],
-                                                    node["param"]["num_filter"])
+            label = r"Convolution\n%sx%s/%s, %s" % (_str2tuple(node["attr"]["kernel"])[0],
+                                                    _str2tuple(node["attr"]["kernel"])[1],
+                                                    _str2tuple(node["attr"]["stride"])[0]
+                                                    if "stride" in node["attr"] else '1',
+                                                    node["attr"]["num_filter"])
             attr["fillcolor"] = cm[1]
         elif op == "FullyConnected":
-            label = r"FullyConnected\n%s" % node["param"]["num_hidden"]
+            label = r"FullyConnected\n%s" % node["attr"]["num_hidden"]
             attr["fillcolor"] = cm[1]
         elif op == "BatchNorm":
             attr["fillcolor"] = cm[3]
         elif op == "Activation" or op == "LeakyReLU":
-            label = r"%s\n%s" % (op, node["param"]["act_type"])
+            label = r"%s\n%s" % (op, node["attr"]["act_type"])
             attr["fillcolor"] = cm[2]
         elif op == "Pooling":
-            label = r"Pooling\n%s, %sx%s/%s" % (node["param"]["pool_type"],
-                                                _str2tuple(node["param"]["kernel"])[0],
-                                                _str2tuple(node["param"]["kernel"])[1],
-                                                _str2tuple(node["param"]["stride"])[0])
+            label = r"Pooling\n%s, %sx%s/%s" % (node["attr"]["pool_type"],
+                                                _str2tuple(node["attr"]["kernel"])[0],
+                                                _str2tuple(node["attr"]["kernel"])[1],
+                                                _str2tuple(node["attr"]["stride"])[0]
+                                                if "stride" in node["attr"] else '1')
             attr["fillcolor"] = cm[4]
         elif op == "Concat" or op == "Flatten" or op == "Reshape":
             attr["fillcolor"] = cm[5]
@@ -275,7 +277,7 @@ def plot_network(symbol, title="plot", save_format='pdf', shape=None, node_attrs
         else:
             attr["fillcolor"] = cm[7]
             if op == "Custom":
-                label = node["param"]["op_type"]
+                label = node["attr"]["op_type"]
 
         dot.node(name=name, label=label, **attr)
 

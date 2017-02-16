@@ -8,8 +8,10 @@ Step by step instructions for setting up MXNet:
 - [Installing MXNet on the Cloud (AWS AMI)](http://mxnet.io/get_started/cloud_setup.html)
 - [Installing MXNet on Ubuntu](http://mxnet.io/get_started/ubuntu_setup.html)
 - [Installing MXNet on Amazon Linux](http://mxnet.io/get_started/amazonlinux_setup.html)
+- [Installing MXNet on CentOS](http://mxnet.io/get_started/centos_setup.html)
 - [Installing MXNet on OS X (Mac)](http://mxnet.io/get_started/osx_setup.html)
 - [Installing MXNet on Windows](http://mxnet.io/get_started/windows_setup.html)
+- [Installing MXNet on Raspberry Pi (Raspbian)](http://mxnet.io/get_started/raspbian_setup.html)
 
 This topic also covers the following:
 - [Prerequisites for using MXNet](#prerequisites)
@@ -23,7 +25,7 @@ pull request. For details, see [contribution guidelines](http://mxnet.io/communi
 
 This section lists the basic requirements for running MXNet, requirements for using it with GPUs, and requirements to support computer vision and image augmentation.
 
-**Note:**  Setting up all basic(CPU only) required dependencies is covered as part of individual OS installation guide. This section is provided for power users who wants to set up alternate dependencies(GPU/Intel MKL etc..) and experiment.
+**Note:**  Setting up all basic(CPU only) required dependencies is covered as part of individual OS installation guide. This section is provided for power users who want to set up alternate dependencies(GPU/Intel MKL etc..) and experiment.
 
 ## Minimum Requirements
 
@@ -40,6 +42,9 @@ You must have the following:
   * [libblas](http://www.netlib.org/blas/)
   * [openblas](http://www.openblas.net/)
   * [Intel MKL](https://software.intel.com/en-us/node/528497)
+
+- [Graphviz](http://www.graphviz.org/) for visualizing the network graphs.
+- [Jupyter Notebook](http://jupyter.readthedocs.io/en/latest/) for running examples and tutorials of MXNet.
 
 ## Requirements for Using GPUs
 
@@ -64,7 +69,7 @@ This section provides instructions on how to build MXNet's dependent libraries f
 - If you do not have root permission to install packages. In this case, you need to change the installation directory from /usr/local to one where you do have permission. The following examples use the directory ${HOME}.
 
 ## Building GCC from Source Code
-To build the GNU Complier Collection (GCC) from source code, you need the 32-bit libc library.
+To build the GNU Compiler Collection (GCC) from source code, you need the 32-bit libc library.
 
 1. Install libc with one of the following system-specific commands:
 
@@ -130,6 +135,30 @@ To build OpenCV from source code, you need the ```cmake``` library .
 	```
 # Common Installation Problems
 This section provides solutions for common installation problems.
+## General
+**Message:** ImportError: No module named _graphviz
+
+**Cause:** Graphviz is not installed.
+
+**Solution:**
+On Mac, You can install Graphviz with below command
+```bash
+  brew install graphviz
+```
+Or, using pip
+```bash
+  brew install python
+  pip install graphviz
+```
+**Message:** RuntimeError: failed to execute ['dot', '-Tsvg'], make sure the Graphviz executables are on your systems' path
+
+**Cause:** Graphviz executable (lib) path is currently not in the system path and program is unable to use Graphviz for plotting the graph
+
+**Solution:** Add Graphviz executable (lib) path to your system path.
+On Mac/Linux machines, Graphviz is generally installed in - ```/usr/local/lib/graphviz/``` or ```/usr/lib/graphviz/``` or ```/usr/lib64/graphviz/``` and on Windows - ```C:\Program Files (x86)\Graphviz2.38\bin```.
+
+**Note** If you are using Jupyter notebook, you may need to restart the kernel to refresh the system path and find Graphviz executable.
+
 ## Mac OS X Error Message
 **Message:** link error ld: library not found for -lgomp
 
