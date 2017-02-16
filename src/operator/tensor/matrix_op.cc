@@ -14,6 +14,8 @@ DMLC_REGISTER_PARAMETER(TransposeParam);
 DMLC_REGISTER_PARAMETER(ExpandDimParam);
 DMLC_REGISTER_PARAMETER(SimpleCropParam);
 DMLC_REGISTER_PARAMETER(ClipParam);
+DMLC_REGISTER_PARAMETER(TruncParam);
+DMLC_REGISTER_PARAMETER(TruncArrayParam);
 DMLC_REGISTER_PARAMETER(SimpleCropAssignScalarParam);
 DMLC_REGISTER_PARAMETER(SliceParam);
 DMLC_REGISTER_PARAMETER(FlipParam);
@@ -311,6 +313,45 @@ NNVM_REGISTER_OP(_backward_clip)
 .set_attr_parser(ParamParser<ClipParam>)
 .set_attr<nnvm::TIsBackward>("TIsBackward", true)
 .set_attr<FCompute>("FCompute<cpu>", ClipGrad_<cpu>);
+
+NNVM_REGISTER_OP(trunc)
+.MXNET_DESCRIBE("truncate ndarray elements by threshold")
+.set_num_inputs(1)
+.set_num_outputs(1)
+.set_attr_parser(ParamParser<TruncParam>)
+.set_attr<nnvm::FInferShape>("FInferShape", ElemwiseShape<1, 1>)
+.set_attr<nnvm::FInferType>("FInferType", ElemwiseType<1, 1>)
+.set_attr<FCompute>("FCompute<cpu>", Trunc<cpu>)
+.set_attr<nnvm::FGradient>("FGradient", ElemwiseGradUseIn{ "_backward_trunc" })
+.add_argument("data", "NDArray", "Source input")
+.add_arguments(TruncParam::__FIELDS__());
+
+NNVM_REGISTER_OP(_backward_trunc)
+.set_num_inputs(1)
+.set_num_outputs(1)
+.set_attr_parser(ParamParser<TruncParam>)
+.set_attr<nnvm::TIsBackward>("TIsBackward", true)
+.set_attr<FCompute>("FCompute<cpu>", TruncGrad_<cpu>);
+
+NNVM_REGISTER_OP(trunc_array)
+.MXNET_DESCRIBE("truncate ndarray elements by position")
+.set_num_inputs(2)
+.set_num_outputs(1)
+.set_attr_parser(ParamParser<TruncArrayParam>)
+.set_attr<nnvm::FInferShape>("FInferShape", ElemwiseShape<2, 1>)
+.set_attr<nnvm::FInferType>("FInferType", ElemwiseType<2, 1>)
+.set_attr<FCompute>("FCompute<cpu>", TruncArray<cpu>)
+.set_attr<nnvm::FGradient>("FGradient", ElemwiseGradUseIn{ "_backward_trunc_array" })
+.add_argument("data", "NDArray", "Source input")
+.add_argument("sorted_idx", "NDArray", "Sorted indexes of input")
+.add_arguments(TruncArrayParam::__FIELDS__());
+
+NNVM_REGISTER_OP(_backward_trunc_array)
+.set_num_inputs(2)
+.set_num_outputs(1)
+.set_attr_parser(ParamParser<TruncArrayParam>)
+.set_attr<nnvm::TIsBackward>("TIsBackward", true)
+.set_attr<FCompute>("FCompute<cpu>", TruncArrayGrad_<cpu>);
 
 NNVM_REGISTER_OP(repeat)
 .MXNET_DESCRIBE("Repeat elements of an array")

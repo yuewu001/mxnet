@@ -57,6 +57,18 @@ NNVM_REGISTER_OP(clip)
 NNVM_REGISTER_OP(_backward_clip)
 .set_attr<FCompute>("FCompute<gpu>", ClipGrad_<gpu>);
 
+NNVM_REGISTER_OP(trunc)
+.set_attr<FCompute>("FCompute<gpu>", Trunc<gpu>);
+
+NNVM_REGISTER_OP(_backward_trunc)
+.set_attr<FCompute>("FCompute<gpu>", TruncGrad_<gpu>);
+
+NNVM_REGISTER_OP(trunc_array)
+.set_attr<FCompute>("FCompute<gpu>", TruncArray<gpu>);
+
+NNVM_REGISTER_OP(_backward_trunc_array)
+.set_attr<FCompute>("FCompute<gpu>", TruncArrayGrad_<gpu>);
+
 NNVM_REGISTER_OP(repeat)
 .set_attr<FCompute>("FCompute<gpu>", RepeatOpForward<gpu>);
 

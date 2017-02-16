@@ -25,25 +25,23 @@ def _get_lr_scheduler(args, kv):
 def _load_model(args, rank=0):
     if 'load_epoch' not in args or args.load_epoch is None:
         return (None, None, None)
-    assert args.pretrain is not None
-    pretrain = args.pretrain
-    if rank > 0 and os.path.exists("%s-%d-symbol.json" % (pretrain, rank)):
-        pretrain += "-%d" % (rank)
+    assert args.model_prefix is not None
+    model_prefix = args.model_prefix
+    if rank > 0 and os.path.exists("%s-%d-symbol.json" % (model_prefix, rank)):
+        model_prefix += "-%d" % (rank)
     sym, arg_params, aux_params = mx.model.load_checkpoint(
-        pretrain, args.load_epoch)
-    logging.info('Loaded model %s_%04d.params', pretrain, args.load_epoch)
+        model_prefix, args.load_epoch)
+    logging.info('Loaded model %s_%04d.params', model_prefix, args.load_epoch)
     return (sym, arg_params, aux_params)
 
 def epoch_end(args, prefix, period=1):
     """callback at end of every epoch.
-
     Parameters
     ----------
     prefix : str
         The file prefix to checkpoint to
     period : int
-    	How many epochs to wait before checkpointing. Default is 1.
-
+        How many epochs to wait before checkpointing. Default is 1.
     Returns
     -------
     callback : function
@@ -53,7 +51,7 @@ def epoch_end(args, prefix, period=1):
     def _callback(iter_no, sym, arg, aux):
         """The checkpoint function."""
         #calculate the sparsity
-        if 'trunc_threshs' in args:
+        if 'trunc_threshs' in args or 'trunc_percent' in args:
             for arg_name, arg_val in arg.iteritems():
                 if arg_name.endswith('_weights'):
                     sparsity = float((arg_val.asnumpy()  == 0).sum()) / np.prod(arg_val.shape)
@@ -71,7 +69,7 @@ def _save_model(args, rank=0):
     if not os.path.isdir(dst_dir):
         os.mkdir(dst_dir)
     return epoch_end(args, args.model_prefix if rank == 0 else "%s-%d" % (
-        args.model_prefix, rank), period=args.save_period)
+        args.model_prefix, rank), period = args.save_period)
 
 def add_fit_args(parser):
     """
@@ -105,16 +103,16 @@ def add_fit_args(parser):
                        help='the batch size')
     train.add_argument('--disp-batches', type=int, default=20,
                        help='show progress for every n batches')
-    train.add_argument('--pretrain', type=str,
-                       help='pretrained model prefix')
-    train.add_argument('--load-epoch', type=int,
-                       help='load the model on an epoch using the model-load-prefix')
     train.add_argument('--model-prefix', type=str,
                        help='model prefix')
+    parser.add_argument('--monitor', dest='monitor', type=int, default=0,
+                        help='log network parameters every N iters if larger than 0')
+    train.add_argument('--load-epoch', type=int,
+                       help='load the model on an epoch using the model-load-prefix')
+    train.add_argument('--save-period', type=int,default=25,
+                       help='save model every epochs')
     train.add_argument('--top-k', type=int, default=0,
                        help='report the top-k accuracy. 0 means no report.')
-    train.add_argument('--save-period', type=int, default=25,
-                       help='save model every period')
     train.add_argument('--test-io', type=int, default=0,
                        help='1 means test reading speed without training')
     return train
@@ -169,23 +167,27 @@ def fit(args, network, data_loader, **kwargs):
     lr, lr_scheduler = _get_lr_scheduler(args, kv)
 
     # create model
-    model = mx.model.FeedForward(
-        ctx           = devs,
-        symbol        = network,
-        begin_epoch   = args.load_epoch if args.load_epoch else 0,
-        num_epoch     = args.num_epochs,
-        arg_params    = arg_params,
-        aux_params    = aux_params,
-        learning_rate = lr,
-        lr_scheduler  = lr_scheduler,
-        momentum      = args.mom,
-        wd            = args.wd,
-        optimizer     = args.optimizer,
-        #initializer   = mx.init.Xavier(rnd_type='gaussian', factor_type="in", magnitude=2)
-        initializer   = mx.init.MSRAPrelu(factor_type="out", slope=0),
-        # initializer   = mx.init.Xavier(factor_type="in", magnitude=2.34),
-        trunc_threshs = args.trunc_threshs
+    model = mx.mod.Module(
+        context       = devs,
+        symbol        = network
     )
+
+    lr_scheduler  = lr_scheduler
+    optimizer_params = {
+            'learning_rate': lr,
+            'momentum' : args.mom,
+            'wd' : args.wd,
+            'lr_scheduler': lr_scheduler}
+    if 'trunc_threshs' in args:
+        optimizer_params['trunc_threshs'] = args.trunc_threshs
+    if 'trunc_percent' in args:
+        optimizer_params['trunc_percent'] = args.trunc_percent
+
+    monitor = mx.mon.Monitor(args.monitor, pattern=".*") if args.monitor > 0 else None
+
+    initializer   = mx.init.Xavier(
+       rnd_type='gaussian', factor_type="in", magnitude=2)
+    # initializer   = mx.init.Xavier(factor_type="in", magnitude=2.34),
 
     # evaluation metrices
     eval_metrics = ['accuracy']
@@ -199,10 +201,18 @@ def fit(args, network, data_loader, **kwargs):
         batch_end_callbacks += cbs if isinstance(cbs, list) else [cbs]
 
     # run
-    model.fit(
-        X                  = train,
+    model.fit(train,
+        begin_epoch        = args.load_epoch if args.load_epoch else 0,
+        num_epoch          = args.num_epochs,
         eval_data          = val,
         eval_metric        = eval_metrics,
         kvstore            = kv,
+        optimizer          = args.optimizer,
+        optimizer_params   = optimizer_params,
+        initializer        = initializer,
+        arg_params         = arg_params,
+        aux_params         = aux_params,
         batch_end_callback = batch_end_callbacks,
-        epoch_end_callback = checkpoint)
+        epoch_end_callback = checkpoint,
+        allow_missing      = True,
+        monitor            = monitor)

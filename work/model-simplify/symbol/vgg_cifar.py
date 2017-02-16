@@ -14,8 +14,7 @@ def get_symbol(num_classes):
                                     stride=(1,1),
                                     pad=(1, 1),
                                     name="conv1_1")
-    nw1_1 = mx.symbol.NeuronWeighting(data=conv1_1, name="nw1_1")
-    bn1_1 = mx.symbol.BatchNorm(data=nw1_1, eps=1e-3, name='bn1_1')
+    bn1_1 = mx.symbol.BatchNorm(data=conv1_1, eps=1e-3, name='bn1_1')
     relu1_1 = mx.symbol.Activation(data=bn1_1, act_type="relu", name="relu1_1")
     drop1_1 = mx.symbol.Dropout(data=relu1_1, p=0.3, name="drop1_1")
     conv1_2 = mx.symbol.Convolution(data=drop1_1,
@@ -24,8 +23,7 @@ def get_symbol(num_classes):
                                     stride=(1,1),
                                     pad=(1, 1),
                                     name="conv1_2")
-    nw1_2 = mx.symbol.NeuronWeighting(data=conv1_2, name="nw1_2")
-    bn1_2 = mx.symbol.BatchNorm(data=nw1_2, eps=1e-3, name='bn1_2')
+    bn1_2 = mx.symbol.BatchNorm(data=conv1_2, eps=1e-3, name='bn1_2')
     relu1_2 = mx.symbol.Activation(data=bn1_2, act_type="relu", name="relu1_2")
     pool1 = mx.symbol.Pooling(data=relu1_2, pool_type="max", kernel=(2, 2),
                               stride=(2,2), name="pool1")
@@ -36,8 +34,7 @@ def get_symbol(num_classes):
                                     stride=(1,1),
                                     pad=(1, 1),
                                     name="conv2_1")
-    nw2_1 = mx.symbol.NeuronWeighting(data=conv2_1, name="nw2_1")
-    bn2_1 = mx.symbol.BatchNorm(data=nw2_1, eps=1e-3, name='bn2_1')
+    bn2_1 = mx.symbol.BatchNorm(data=conv2_1, eps=1e-3, name='bn2_1')
     relu2_1 = mx.symbol.Activation(data=bn2_1, act_type="relu", name="relu2_1")
     drop2_1 = mx.symbol.Dropout(data=relu2_1, p=0.4, name="drop2_1")
     conv2_2 = mx.symbol.Convolution(data=drop2_1,
@@ -46,8 +43,7 @@ def get_symbol(num_classes):
                                     stride=(1,1),
                                     pad=(1, 1),
                                     name="conv2_2")
-    nw2_2 = mx.symbol.NeuronWeighting(data=conv2_2, name="nw2_2")
-    bn2_2 = mx.symbol.BatchNorm(data=nw2_2, eps=1e-3, name='bn2_2')
+    bn2_2 = mx.symbol.BatchNorm(data=conv2_2, eps=1e-3, name='bn2_2')
     relu2_2 = mx.symbol.Activation(data=bn2_2, act_type="relu", name="relu2_2")
     pool2 = mx.symbol.Pooling(data=relu2_2, pool_type="max", kernel=(2, 2),
                               stride=(2,2), name="pool2")
@@ -58,8 +54,7 @@ def get_symbol(num_classes):
                                     stride=(1,1),
                                     pad=(1, 1),
                                     name="conv3_1")
-    nw3_1 = mx.symbol.NeuronWeighting(data=conv3_1, name="nw3_1")
-    bn3_1 = mx.symbol.BatchNorm(data=nw3_1, eps=1e-3, name='bn3_1')
+    bn3_1 = mx.symbol.BatchNorm(data=conv3_1, eps=1e-3, name='bn3_1')
     relu3_1 = mx.symbol.Activation(data=bn3_1, act_type="relu", name="relu3_1")
     drop3_1 = mx.symbol.Dropout(data=relu3_1, p=0.4, name="drop3_1")
     conv3_2 = mx.symbol.Convolution(data=drop3_1,
@@ -68,8 +63,7 @@ def get_symbol(num_classes):
                                     stride=(1,1),
                                     pad=(1, 1),
                                     name="conv3_2")
-    nw3_2 = mx.symbol.NeuronWeighting(data=conv3_2, name="nw3_2")
-    bn3_2 = mx.symbol.BatchNorm(data=nw3_2, eps=1e-3, name='bn3_2')
+    bn3_2 = mx.symbol.BatchNorm(data=conv3_2, eps=1e-3, name='bn3_2')
     relu3_2 = mx.symbol.Activation(data=bn3_2, act_type="relu", name="relu3_2")
     drop3_2 = mx.symbol.Dropout(data=relu3_2, p=0.4, name="drop3_2")
     conv3_3 = mx.symbol.Convolution(data=drop3_2,
@@ -78,8 +72,7 @@ def get_symbol(num_classes):
                                     stride=(1,1),
                                     pad=(1, 1),
                                     name="conv3_3")
-    nw3_3 = mx.symbol.NeuronWeighting(data=conv3_3, name="nw3_3")
-    bn3_3 = mx.symbol.BatchNorm(data=nw3_3, eps=1e-3, name='bn3_3')
+    bn3_3 = mx.symbol.BatchNorm(data=conv3_3, eps=1e-3, name='bn3_3')
     relu3_3 = mx.symbol.Activation(data=bn3_3, act_type="relu", name="relu3_3")
     pool3 = mx.symbol.Pooling(data=relu3_3, pool_type="max", kernel=(2, 2),
                               stride=(2,2), name="pool3")
@@ -90,8 +83,7 @@ def get_symbol(num_classes):
                                     stride=(1,1),
                                     pad=(1, 1),
                                     name="conv4_1")
-    nw4_1 = mx.symbol.NeuronWeighting(data=conv4_1, name="nw4_1")
-    bn4_1 = mx.symbol.BatchNorm(data=nw4_1, eps=1e-3, name='bn4_1')
+    bn4_1 = mx.symbol.BatchNorm(data=conv4_1, eps=1e-3, name='bn4_1')
     relu4_1 = mx.symbol.Activation(data=bn4_1, act_type="relu", name="relu4_1")
     drop4_1 = mx.symbol.Dropout(data=relu4_1, p=0.4, name="drop4_1")
     conv4_2 = mx.symbol.Convolution(data=drop4_1,
@@ -100,8 +92,7 @@ def get_symbol(num_classes):
                                     stride=(1,1),
                                     pad=(1, 1),
                                     name="conv4_2")
-    nw4_2 = mx.symbol.NeuronWeighting(data=conv4_2, name="nw4_2")
-    bn4_2 = mx.symbol.BatchNorm(data=nw4_2, eps=1e-3, name='bn4_2')
+    bn4_2 = mx.symbol.BatchNorm(data=conv4_2, eps=1e-3, name='bn4_2')
     relu4_2 = mx.symbol.Activation(data=bn4_2, act_type="relu", name="relu4_2")
     drop4_2 = mx.symbol.Dropout(data=relu4_2, p=0.4, name="drop4_2")
     conv4_3 = mx.symbol.Convolution(data=drop4_2,
@@ -110,8 +101,7 @@ def get_symbol(num_classes):
                                     stride=(1,1),
                                     pad=(1, 1),
                                     name="conv4_3")
-    nw4_3 = mx.symbol.NeuronWeighting(data=conv4_3, name="nw4_3")
-    bn4_3 = mx.symbol.BatchNorm(data=nw4_3, eps=1e-3, name='bn4_3')
+    bn4_3 = mx.symbol.BatchNorm(data=conv4_3, eps=1e-3, name='bn4_3')
     relu4_3 = mx.symbol.Activation(data=bn4_3, act_type="relu", name="relu4_3")
     pool4 = mx.symbol.Pooling(data=relu4_3, pool_type="max", kernel=(2, 2),
                               stride=(2,2), name="pool4")
@@ -122,8 +112,7 @@ def get_symbol(num_classes):
                                     stride=(1,1),
                                     pad=(1, 1),
                                     name="conv5_1")
-    nw5_1 = mx.symbol.NeuronWeighting(data=conv5_1, name="nw5_1")
-    bn5_1 = mx.symbol.BatchNorm(data=nw5_1, eps=1e-3, name='bn5_1')
+    bn5_1 = mx.symbol.BatchNorm(data=conv5_1, eps=1e-3, name='bn5_1')
     relu5_1 = mx.symbol.Activation(data=bn5_1, act_type="relu", name="relu5_1")
     drop5_1 = mx.symbol.Dropout(data=relu5_1, p=0.4, name="drop5_1")
     conv5_2 = mx.symbol.Convolution(data=drop5_1,
@@ -132,8 +121,7 @@ def get_symbol(num_classes):
                                     stride=(1,1),
                                     pad=(1, 1),
                                     name="conv5_2")
-    nw5_2 = mx.symbol.NeuronWeighting(data=conv5_2, name="nw5_2")
-    bn5_2 = mx.symbol.BatchNorm(data=nw5_2, eps=1e-3, name='bn5_2')
+    bn5_2 = mx.symbol.BatchNorm(data=conv5_2, eps=1e-3, name='bn5_2')
     relu5_2 = mx.symbol.Activation(data=bn5_2, act_type="relu", name="relu5_2")
     drop5_2 = mx.symbol.Dropout(data=relu5_2, p=0.4, name="drop5_2")
     conv5_3 = mx.symbol.Convolution(data=drop5_2,
@@ -142,8 +130,7 @@ def get_symbol(num_classes):
                                     stride=(1,1),
                                     pad=(1, 1),
                                     name="conv5_3")
-    nw5_3 = mx.symbol.NeuronWeighting(data=conv5_3, name="nw5_3")
-    bn5_3 = mx.symbol.BatchNorm(data=nw5_3, eps=1e-3, name='bn5_3')
+    bn5_3 = mx.symbol.BatchNorm(data=conv5_3, eps=1e-3, name='bn5_3')
     relu5_3 = mx.symbol.Activation(data=bn5_3, act_type="relu", name="relu5_3")
     pool5 = mx.symbol.Pooling(data=relu5_3, pool_type="max", kernel=(2, 2),
                               stride=(2,2), name="pool5")

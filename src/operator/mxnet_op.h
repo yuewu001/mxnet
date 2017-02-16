@@ -88,6 +88,63 @@ struct clip_grad {
   }
 };
 
+struct trunc {
+  template<typename DType>
+  MSHADOW_XINLINE static void Map(int i, DType* out, const DType* datas,
+                                  DType thresh) {
+    DType data = datas[i];
+    if (data > DType(0)) {
+      out[i] = data > thresh ?  data - thresh : DType(0);
+    } else {
+      out[i] = -data > thresh ?  data + thresh : DType(0);
+    }
+  }
+};
+
+struct trunc_grad {
+  template<typename DType>
+  MSHADOW_XINLINE static void Map(int i, DType* out, const DType* grad, const DType* datas,
+                                  DType thresh) {
+    DType data = datas[i];
+    if (data > DType(0) && data > thresh) {
+      out[i] = grad[i];
+    } else if (data < DType(0) && -data > thresh){
+      out[i] = grad[i];
+    }
+    else {
+      out[i] = DType(0);
+    }
+  }
+};
+
+struct trunc_array {
+  template<typename DType>
+  MSHADOW_XINLINE static void Map(int i, DType* out, const DType* datas,
+                                  const DType* sorted_idx, index_t k) {
+    int idx = int(sorted_idx[i]);
+    if (i < k) {
+      out[idx] = datas[idx];
+    }
+    else {
+      out[idx] = 0;
+    }
+  }
+};
+
+struct trunc_array_grad {
+  template<typename DType>
+  MSHADOW_XINLINE static void Map(int i, DType* out, const DType* grad, const DType* datas,
+                                  const DType* sorted_idx, index_t k) {
+    int idx = int(sorted_idx[i]);
+    if (i < k) {
+      out[idx] = grad[idx];
+    }
+    else {
+      out[idx] = 0;
+    }
+  }
+};
+
 }  // namespace mxnet_op
 }  // namespace op
 }  // namespace mxnet

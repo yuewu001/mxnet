@@ -3,7 +3,7 @@
 #     File Name           :     train.py
 #     Created By          :     yuewu
 #     Creation Date       :     [2016-12-21 13:57]
-#     Last Modified       :     [2017-02-10 11:40]
+#     Last Modified       :     [2017-02-10 22:05]
 #     Description         :      
 #################################################################################
 
@@ -53,15 +53,15 @@ if __name__ == '__main__':
         random_corp    = 0,
         # train
         batch_size     = 128,
-        num_epochs     = 220,
-        lr             = 1e-3,
+        num_epochs     = 200,
+        lr             = 1e-1,
         lr_factor      = 1e-1,
-        lr_step_epochs = '220',
-        #wd             = 0.0005,
-        wd             = 0,
-        #mom            = 0.9,
-        mom            = 0,
-        optimizer      = 'stg',
+        lr_step_epochs = '50,100,150',
+        wd             = 0.0005,
+        #wd             = 0,
+        mom            = 0.9,
+        #mom            = 0,
+        optimizer      = 'sgd',
     )
     args = parser.parse_args()
 
@@ -71,9 +71,4 @@ if __name__ == '__main__':
     sym = net.get_symbol(args.num_classes)
 
     # train
-    args.trunc_threshs = {'nw1_1_weights':1e-1}
-    #args.trunc_threshs = 1e-3 #1e-5
-    args.trunc_threshs = {}
-    for trunc_layer in args.trunc_layer:
-        args.trunc_threshs[trunc_layer] = args.trunc_value
     fit.fit(args, sym, data.get_rec_iter)

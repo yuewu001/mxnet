@@ -811,6 +811,100 @@ void ClipGrad_(const nnvm::NodeAttrs& attrs,
   });
 }
 
+
+struct TruncParam : public dmlc::Parameter<TruncParam> {
+  real_t thresh;
+  DMLC_DECLARE_PARAMETER(TruncParam) {
+    DMLC_DECLARE_FIELD(thresh)
+      .describe("truncate value");
+  }
+};
+
+struct TruncArrayParam : public dmlc::Parameter<TruncArrayParam> {
+  real_t percent;
+  DMLC_DECLARE_PARAMETER(TruncArrayParam) {
+    DMLC_DECLARE_FIELD(percent)
+      .describe("truncate percentage");
+  }
+};
+
+template<typename xpu>
+void Trunc(const nnvm::NodeAttrs& attrs,
+          const OpContext& ctx,
+          const std::vector<TBlob>& inputs,
+          const std::vector<OpReqType>& req,
+          const std::vector<TBlob>& outputs) {
+  using namespace mshadow;
+  using namespace mxnet_op;
+  const TruncParam& param = nnvm::get<TruncParam>(attrs.parsed);
+  CHECK_EQ(inputs[0].type_flag_, outputs[0].type_flag_);
+  Stream<xpu> *s = ctx.get_stream<xpu>();
+
+  MSHADOW_TYPE_SWITCH(outputs[0].type_flag_, DType, {
+    Kernel<trunc, xpu>::Launch(s, outputs[0].Size(), outputs[0].dptr<DType>(),
+    inputs[0].dptr<DType>(), DType(param.thresh));
+  });
+}
+
+template<typename xpu>
+void TruncGrad_(const nnvm::NodeAttrs& attrs,
+               const OpContext& ctx,
+               const std::vector<TBlob>& inputs,
+               const std::vector<OpReqType>& req,
+               const std::vector<TBlob>& outputs) {
+  using namespace mshadow;
+  using namespace mxnet_op;
+  const TruncParam& param = nnvm::get<TruncParam>(attrs.parsed);
+  CHECK_EQ(inputs[0].type_flag_, outputs[0].type_flag_);
+  Stream<xpu> *s = ctx.get_stream<xpu>();
+  MSHADOW_TYPE_SWITCH(outputs[0].type_flag_, DType, {
+    Kernel<trunc_grad, xpu>::Launch(s, outputs[0].Size(), outputs[0].dptr<DType>(),
+    inputs[0].dptr<DType>(), inputs[1].dptr<DType>(), DType(param.thresh));
+  });
+}
+
+template<typename xpu>
+void TruncArray(const nnvm::NodeAttrs& attrs,
+          const OpContext& ctx,
+          const std::vector<TBlob>& inputs,
+          const std::vector<OpReqType>& req,
+          const std::vector<TBlob>& outputs) {
+  using namespace mshadow;
+  using namespace mxnet_op;
+  const TruncArrayParam& param = nnvm::get<TruncArrayParam>(attrs.parsed);
+  CHECK_EQ(inputs[0].type_flag_, outputs[0].type_flag_);
+  CHECK_EQ(inputs[1].type_flag_, outputs[0].type_flag_);
+  Stream<xpu> *s = ctx.get_stream<xpu>();
+  index_t k = index_t(param.percent * inputs[0].Size());
+
+  MSHADOW_TYPE_SWITCH(outputs[0].type_flag_, DType, {
+    Kernel<trunc_array, xpu>::Launch(s, outputs[0].Size(), outputs[0].dptr<DType>(),
+    inputs[0].dptr<DType>(), inputs[1].dptr<DType>(), k);
+  });
+}
+
+template<typename xpu>
+void TruncArrayGrad_(const nnvm::NodeAttrs& attrs,
+               const OpContext& ctx,
+               const std::vector<TBlob>& inputs,
+               const std::vector<OpReqType>& req,
+               const std::vector<TBlob>& outputs) {
+  using namespace mshadow;
+  using namespace mxnet_op;
+  const TruncArrayParam& param = nnvm::get<TruncArrayParam>(attrs.parsed);
+  CHECK_EQ(inputs[0].type_flag_, outputs[0].type_flag_);
+  CHECK_EQ(inputs[1].type_flag_, outputs[0].type_flag_);
+  Stream<xpu> *s = ctx.get_stream<xpu>();
+  index_t k = index_t(param.percent * inputs[0].Size());
+
+  MSHADOW_TYPE_SWITCH(outputs[0].type_flag_, DType, {
+    Kernel<trunc_array_grad, xpu>::Launch(s, outputs[0].Size(), outputs[0].dptr<DType>(),
+    inputs[0].dptr<DType>(), inputs[1].dptr<DType>(), inputs[2].dptr<DType>(), k);
+  });
+}
+
+
+
 template<typename xpu>
 void CropAssign(const nnvm::NodeAttrs& attrs,
                 const OpContext& ctx,

@@ -67,19 +67,6 @@ struct ClipMax : public BinaryBase {
   };
 };
 
-struct Trunc : public BinaryBase {
-  struct mshadow_op {
-    template<typename DType>
-    MSHADOW_XINLINE static DType Map(DType a, DType b) {
-      if (a > 0) {
-        return  a > b ? a - b : DType(0);
-      } else {
-        return -a > b ? a + b : DType(0);
-      }
-    }
-  };
-};
-
 struct OneHotEncode {
   inline static TShape GetShape(const TShape &index, const TShape &proptype) {
     CHECK(index.ndim() == 1 && proptype.ndim() == 2) << "OneHotEncode only support 1d index.";
@@ -115,9 +102,6 @@ struct GaussianDistribution {};
 template<typename Device>
 void EvalClip(const TBlob &src, const real_t &a_min, const real_t &a_max,
               TBlob *ret, RunContext ctx);
-
-template<typename Device>
-void EvalTrunc(const TBlob &src, const real_t &thresh, TBlob *ret, RunContext ctx);
 
 template<typename Device, typename OP>
 void Eval(const TBlob &lhs, const TBlob &mhs, const TBlob &rhs, TBlob *ret, RunContext ctx);
