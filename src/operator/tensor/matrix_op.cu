@@ -69,6 +69,9 @@ NNVM_REGISTER_OP(trunc_array)
 NNVM_REGISTER_OP(_backward_trunc_array)
 .set_attr<FCompute>("FCompute<gpu>", TruncArrayGrad_<gpu>);
 
+NNVM_REGISTER_OP(mask_mul)
+.set_attr<FCompute>("FCompute<gpu>", MaskMul<gpu>);
+
 NNVM_REGISTER_OP(repeat)
 .set_attr<FCompute>("FCompute<gpu>", RepeatOpForward<gpu>);
 

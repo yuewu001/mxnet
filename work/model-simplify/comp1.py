@@ -3,7 +3,7 @@
 #     File Name           :     generate_baseline.py
 #     Created By          :     yuewu
 #     Creation Date       :     [2017-02-14 11:45]
-#     Last Modified       :     [2017-02-15 17:50]
+#     Last Modified       :     [2017-02-16 11:39]
 #     Description         :
 #################################################################################
 import os
@@ -59,7 +59,7 @@ if __name__ == '__main__':
         lr_step_epochs = '205',
         wd             = 0,
         mom            = 0,
-        optimizer      = 'sgdcomp',
+        optimizer      = 'sgdmask',
     )
     args = parser.parse_args()
 
@@ -67,9 +67,8 @@ if __name__ == '__main__':
     sym, arg_params, aux_params = mx.model.load_checkpoint(args.pretrained, args.load_epoch)
 
     # train
-    args.masks = {}
+    args.truncates = {}
     for trunc_layer in args.trunc_layer:
-        print trunc_layer
         k=int(args.trunc_value * arg_params[trunc_layer].shape[0])
         mask = mx.nd.topk(
             mx.nd.sum(
@@ -81,11 +80,11 @@ if __name__ == '__main__':
                 axis=1),
             k=k,
             ret_typ='mask')
-        args.masks[trunc_layer] = mask
+        args.truncates[trunc_layer] = mask
 
 
-    #fit.fit(args        = args,
-    #        network     = sym,
-    #        data_loader = data.get_rec_iter,
-    #        arg_params  = arg_params,
-    #        aux_params  = aux_params)
+    fit.fit(args        = args,
+            network     = sym,
+            data_loader = data.get_rec_iter,
+            arg_params  = arg_params,
+            aux_params  = aux_params)

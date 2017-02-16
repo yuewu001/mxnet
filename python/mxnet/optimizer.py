@@ -2,7 +2,7 @@
 """Common Optimization algorithms with regularizations."""
 import math
 import pickle
-from .ndarray import NDArray, zeros, clip, sqrt, trunc, trunc_array, argsort, abs
+from .ndarray import NDArray, zeros, clip, sqrt, trunc, trunc_array, argsort, abs, mask_mul
 from .ndarray import sgd_update, sgd_mom_update, adam_update, rmsprop_update
 from .random import normal
 
@@ -379,23 +379,23 @@ class STG(Optimizer):
     momentum : float, optional
        momentum value
 
-    trunc_threshs : float/dict, optional
+    truncates : float/dict, optional
         truncate thresholds for neuroweighting layer
     """
-    def __init__(self, momentum=0.0, trunc_threshs = 0.0, **kwargs):
+    def __init__(self, momentum=0.0, truncates = 0.0, **kwargs):
         super(STG, self).__init__(**kwargs)
         assert(self.idx2name is not None and  len(self.idx2name) != 0)
 
         self.trunc_threshs = {}
 
-        if isinstance(trunc_threshs, float):
+        if isinstance(truncates, float):
             for param_id, param_name  in self.idx2name.iteritems():
                 if param_name.endswith('_weights'):
-                    self.trunc_threshs[param_id] = trunc_threshs
-        elif isinstance(trunc_threshs, dict):
+                    self.trunc_threshs[param_id] = truncates
+        elif isinstance(truncates, dict):
             for param_id, param_name  in self.idx2name.iteritems():
-                if param_name in trunc_threshs:
-                    self.trunc_threshs[param_id] = trunc_threshs[param_name]
+                if param_name in truncates:
+                    self.trunc_threshs[param_id] = truncates[param_name]
 
         self.momentum = momentum
 
@@ -466,20 +466,20 @@ class PET(Optimizer):
     momentum : float, optional
        momentum value
 
-    trunc_percent : dict, optional
+    truncates : dict, optional
         truncate percentage for neuroweighting layer
     """
-    def __init__(self, momentum=0.0, trunc_percent = 0.0, **kwargs):
+    def __init__(self, momentum=0.0, truncates = 0.0, **kwargs):
         super(PET, self).__init__(**kwargs)
         assert(self.idx2name is not None and  len(self.idx2name) != 0)
 
         self.trunc_percent = {}
 
-        assert isinstance(trunc_percent, dict)
+        assert isinstance(truncates, dict)
 
         for param_id, param_name  in self.idx2name.iteritems():
-            if param_name in trunc_percent:
-                self.trunc_percent[param_id] = trunc_percent[param_name]
+            if param_name in truncates:
+                self.trunc_percent[param_id] = truncates[param_name]
 
         self.momentum = momentum
 
@@ -551,7 +551,7 @@ class SGDMask(SGD):
     masks : dict, optional
         mask layers
     """
-    def __init__(self, masks={}, **kwargs):
+    def __init__(self, truncates={}, **kwargs):
         super(SGDMask, self).__init__(**kwargs)
 
         self.masks = {}
@@ -559,12 +559,21 @@ class SGDMask(SGD):
 
         self.masks = {}
 
-        assert isinstance(masks, dict)
+        assert isinstance(truncates, dict)
 
         for param_id, param_name  in self.idx2name.iteritems():
-            if param_name in masks:
-                self.masks[param_id] = masks[param_name]
+            if param_name in truncates:
+                self.masks[param_id] = truncates[param_name]
 
+    def create_state(self, index, weight):
+        state =  super(SGDMask, self).create_state(index, weight)
+        if index in self.masks:
+            mask = self.masks[index]
+            mask2 = zeros(mask.shape, weight.context)
+            mask.copyto(mask2)
+            self.masks[index] = mask2
+
+        return state
 
     def update(self, index, weight, grad, state):
         """Update the parameters.
@@ -585,7 +594,7 @@ class SGDMask(SGD):
         """
         super(SGDMask, self).update(index, weight, grad, state)
         if index in self.masks:
-            weight[:] *= self.masks[index]
+            weight[:] = mask_mul(weight, self.masks[index])
 
 @register
 class NAG(SGD):

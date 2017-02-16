@@ -903,6 +903,44 @@ void TruncArrayGrad_(const nnvm::NodeAttrs& attrs,
   });
 }
 
+inline bool MaskOpShape(const nnvm::NodeAttrs& attrs,
+                         std::vector<TShape> *in_attrs,
+                         std::vector<TShape> *out_attrs) {
+  CHECK_EQ(in_attrs->size(), 2) << "Input: [src mask]";
+  CHECK_EQ(out_attrs->size(), 1);
+  const TShape &dshape = (*in_attrs)[0];
+  if (dshape.ndim() == 0) return false;
+  SHAPE_ASSIGN_CHECK(*out_attrs, 0, dshape);
+  return true;
+}
+
+template <typename xpu>
+void MaskMul(const nnvm::NodeAttrs& attrs,
+          const OpContext& ctx,
+          const std::vector<TBlob>& inputs,
+          const std::vector<OpReqType>& req,
+          const std::vector<TBlob>& outputs) {
+  using namespace mshadow;
+  using namespace mshadow::expr;
+  using namespace mxnet_op;
+
+  CHECK_EQ(inputs[0].type_flag_, outputs[0].type_flag_);
+  CHECK_EQ(inputs[1].type_flag_, outputs[0].type_flag_);
+
+  Stream<xpu> *s = ctx.get_stream<xpu>();
+
+  if (req[0] == kWriteTo || req[0] == kWriteInplace) {
+    MSHADOW_TYPE_SWITCH(outputs[0].type_flag_, DType, {
+        Tensor<xpu, 4, DType> in1 = inputs[0].get<xpu, 4, DType>(s);
+        Tensor<xpu, 1, DType> in2 = inputs[1].FlatTo1D<xpu, DType>(s);
+        Tensor<xpu, 4, DType> out = outputs[0].get<xpu, 4, DType>(s);
+        out = in1 * broadcast<0>(in2, in1.shape_);
+    });
+  }
+  else {
+    LOG(FATAL) << "unsupported write method " << req[0] << " in MaskMul";
+  }
+}
 
 
 template<typename xpu>

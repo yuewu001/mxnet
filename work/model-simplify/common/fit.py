@@ -51,9 +51,10 @@ def epoch_end(args, prefix, period=1):
     def _callback(iter_no, sym, arg, aux):
         """The checkpoint function."""
         #calculate the sparsity
-        if 'trunc_threshs' in args or 'trunc_percent' in args:
+        if 'truncates' in args:
             for arg_name, arg_val in arg.iteritems():
-                if arg_name.endswith('_weights'):
+                #if arg_name.endswith('_weights'):
+                if arg_name.startswith('conv') and arg_name.endswith('_weight'):
                     sparsity = float((arg_val.asnumpy()  == 0).sum()) / np.prod(arg_val.shape)
                     logging.info("Epoch[%d] Sparsity of %s: %f", iter_no, arg_name, sparsity)
 
@@ -178,10 +179,8 @@ def fit(args, network, data_loader, **kwargs):
             'momentum' : args.mom,
             'wd' : args.wd,
             'lr_scheduler': lr_scheduler}
-    if 'trunc_threshs' in args:
-        optimizer_params['trunc_threshs'] = args.trunc_threshs
-    if 'trunc_percent' in args:
-        optimizer_params['trunc_percent'] = args.trunc_percent
+    if 'truncates' in args:
+        optimizer_params['truncates'] = args.truncates
 
     monitor = mx.mon.Monitor(args.monitor, pattern=".*") if args.monitor > 0 else None
 

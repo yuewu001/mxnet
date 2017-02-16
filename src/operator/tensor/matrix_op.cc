@@ -353,6 +353,16 @@ NNVM_REGISTER_OP(_backward_trunc_array)
 .set_attr<nnvm::TIsBackward>("TIsBackward", true)
 .set_attr<FCompute>("FCompute<cpu>", TruncArrayGrad_<cpu>);
 
+NNVM_REGISTER_OP(mask_mul)
+.MXNET_DESCRIBE("multiply array with mask")
+.set_num_inputs(2)
+.set_num_outputs(1)
+.set_attr<nnvm::FInferShape>("FInferShape", MaskOpShape)
+.set_attr<nnvm::FInferType>("FInferType", ElemwiseType<2, 1>)
+.set_attr<FCompute>("FCompute<cpu>", MaskMul<cpu>)
+.add_argument("data", "NDArray", "Source input")
+.add_argument("mask", "NDArray", "Source mask");
+
 NNVM_REGISTER_OP(repeat)
 .MXNET_DESCRIBE("Repeat elements of an array")
 .set_num_outputs(1)

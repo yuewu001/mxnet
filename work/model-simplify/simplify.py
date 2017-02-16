@@ -3,7 +3,7 @@
 #     File Name           :     train.py
 #     Created By          :     yuewu
 #     Creation Date       :     [2016-12-21 13:57]
-#     Last Modified       :     [2017-02-14 11:36]
+#     Last Modified       :     [2017-02-16 11:10]
 #     Description         :      
 #################################################################################
 
@@ -74,9 +74,9 @@ if __name__ == '__main__':
     new_sym = net.get_symbol(args.num_classes)
 
     # train
-    args.trunc_percent = {}
+    args.truncates = {}
     for trunc_layer in args.trunc_layer:
-        args.trunc_percent[trunc_layer] = args.trunc_value
+        args.truncates[trunc_layer] = args.trunc_value
     #args.trunc_threshs = {'nw1_1_weights':0.1}
     #args.trunc_percent = {'nw1_1_weights':0.1}
     #args.trunc_threshs = 1e-3 #1e-5
