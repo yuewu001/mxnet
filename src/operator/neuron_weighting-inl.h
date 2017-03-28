@@ -2,7 +2,7 @@
 *     File Name           :     neuron_weighting-inl.h
 *     Created By          :     yuewu
 *     Creation Date       :     [2017-01-03 16:15]
-*     Last Modified       :     [2017-01-18 15:15]
+*     Last Modified       :     [2017-02-17 10:23]
 *     Description         :     neuron weighting for model simplification
 **********************************************************************************/
 
@@ -17,6 +17,7 @@
 #include <string>
 #include <utility>
 #include "./operator_common.h"
+#include "./mshadow_op.h"
 
 namespace mxnet {
 namespace op {
@@ -27,12 +28,28 @@ enum NeuronWeightingOpInputs {kData, kWeights};
 enum NeuronWeightingOpOutputs {kOut};
 }  // neuron
 
+struct NeuronWeightingParam : public dmlc::Parameter<NeuronWeightingParam> {
+  int order;
+  float gamma;
+  DMLC_DECLARE_PARAMETER(NeuronWeightingParam) {
+    DMLC_DECLARE_FIELD(order).set_default(1)
+    .describe("order of algorithm");
+    DMLC_DECLARE_FIELD(gamma).set_default(1.f)
+    .describe("gamma for second order algorithm");
+  }
+};
+
 /**
  * \brief This is the implementation of neuron weighting operator.
  * \tparam xpu The device that the op will be executed on.
  */
 template<typename xpu, typename DType>
 class NeuronWeightingOp : public Operator {
+ public:
+  explicit NeuronWeightingOp(NeuronWeightingParam param) {
+    this->param_ = param;
+  }
+
   void Forward(const OpContext &ctx,
                        const std::vector<TBlob> &in_data,
                        const std::vector<OpReqType> &req,
@@ -47,8 +64,8 @@ class NeuronWeightingOp : public Operator {
     Stream<xpu> *s = ctx.get_stream<xpu>();
 
     Tensor<xpu, 4, DType> data = in_data[neuron::kData].get<xpu, 4, DType>(s);
-    Tensor<xpu, 1, DType> weights = in_data[neuron::kWeights].FlatTo1D<xpu, DType>(s);
     Tensor<xpu, 4, DType> out = out_data[neuron::kOut].get<xpu, 4, DType>(s);
+    Tensor<xpu, 1, DType> weights = in_data[neuron::kWeights].FlatTo1D<xpu, DType>(s).Slice(0, data.shape_[1]);
 
     Assign(out, req[neuron::kOut], data * broadcast<1>(weights, data.shape_));
   }
@@ -69,23 +86,44 @@ class NeuronWeightingOp : public Operator {
     Stream<xpu> *s = ctx.get_stream<xpu>();
 
     Tensor<xpu, 4, DType> data = in_data[neuron::kData].get<xpu, 4, DType>(s);
-    Tensor<xpu, 1, DType> weights = in_data[neuron::kWeights].FlatTo1D<xpu, DType>(s);
+    Tensor<xpu, 1, DType> weights = in_data[neuron::kWeights].FlatTo1D<xpu, DType>(s).Slice(0, data.shape_[1]);
 
     Tensor<xpu, 4, DType> m_out_grad = out_grad[neuron::kOut].get<xpu, 4, DType>(s);
     Tensor<xpu, 4, DType> m_in_grad = in_grad[neuron::kData].get<xpu, 4, DType>(s);
-    Tensor<xpu, 1, DType> gweights = in_grad[neuron::kWeights].FlatTo1D<xpu, DType>(s);
+    Tensor<xpu, 1, DType> gweights = in_grad[neuron::kWeights].FlatTo1D<xpu, DType>(s).Slice(0, data.shape_[1]);
 
     //gradient of data
     Assign(m_in_grad, req[neuron::kData], m_out_grad * broadcast<1>(weights, m_out_grad.shape_));
 
     //gradient of weights
     Assign(gweights, req[neuron::kWeights], sumall_except_dim<1>(m_out_grad * data));
+
+    if (param_.order == 2) {
+      Tensor<xpu, 1, DType> inv_sigma = in_data[neuron::kWeights].FlatTo1D<xpu, DType>(s)
+        .Slice(data.shape_[1], data.shape_[1] * 2);
+
+      gweights /= inv_sigma;
+
+      const real_t scale = static_cast<real_t>(data.shape_[1]) /
+        static_cast<real_t>(data.shape_.Size());
+
+      Tensor<xpu, 1, DType> mean = in_grad[neuron::kWeights].FlatTo1D<xpu, DType>(s)
+        .Slice(data.shape_[1], data.shape_[1] * 2);
+      mean = scale * sumall_except_dim<1>(data);
+
+      inv_sigma += scale * sumall_except_dim<1>(F<mshadow_op::square>(
+            data - broadcast<1>(mean, data.shape_)));
+    }
+
   }
+
+ private:
+  NeuronWeightingParam param_;
 };
 
 // Decalre Factory function, used for dispatch specialization
 template<typename xpu>
-Operator* CreateNeuronWeightingOp(int dtype);
+Operator* CreateNeuronWeightingOp(int dtype, NeuronWeightingParam param);
 
 #if DMLC_USE_CXX11
 // OperatorProperty allows C++11, while Operator do not rely on it.
@@ -99,10 +137,11 @@ Operator* CreateNeuronWeightingOp(int dtype);
 class NeuronWeightingProp: public OperatorProperty {
  public:
   void Init(const std::vector<std::pair<std::string, std::string> >& kwargs) override {
+    param_.Init(kwargs);
   }
 
   std::map<std::string, std::string> GetParams() const override {
-    return std::map<std::string, std::string>();
+    return param_.__DICT__();
   }
 
   std::vector<std::string> ListArguments() const override {
@@ -119,7 +158,15 @@ class NeuronWeightingProp: public OperatorProperty {
     // require data to be known
     if (dshape.ndim() ==  0) return false;
 
-    SHAPE_ASSIGN_CHECK(*in_shape, neuron::kWeights, Shape1(dshape[1]));
+    if (param_.order == 1) {
+      SHAPE_ASSIGN_CHECK(*in_shape, neuron::kWeights, Shape1(dshape[1]));
+    }
+    else if (param_.order == 2) {
+      SHAPE_ASSIGN_CHECK(*in_shape, neuron::kWeights, Shape1(dshape[1] * 2));
+    }
+    else {
+      LOG(FATAL) << "Unsupported order " << param_.order;
+    }
     out_shape->clear();
     out_shape->push_back(dshape);
 
@@ -149,6 +196,7 @@ class NeuronWeightingProp: public OperatorProperty {
 
   OperatorProperty* Copy() const override {
     NeuronWeightingProp* nw_prop = new NeuronWeightingProp();
+    nw_prop->param_ = this->param_;
     return nw_prop;
   }
 
@@ -169,6 +217,9 @@ class NeuronWeightingProp: public OperatorProperty {
       const std::vector<int> &out_data) const {
     return {out_grad[neuron::kOut], in_data[neuron::kData], in_data[neuron::kWeights]};
   }
+
+ private:
+  NeuronWeightingParam param_;
 };
 
 #endif  // DMLC_USE_CXX11

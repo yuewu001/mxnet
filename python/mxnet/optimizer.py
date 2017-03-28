@@ -543,6 +543,97 @@ class PET(Optimizer):
 
 
 @register
+class SOFS(Optimizer):
+    """Perception with Truncation .
+
+    Parameters
+    ----------
+    momentum : float, optional
+       momentum value
+
+    truncates : dict, optional
+        truncate percentage for neuroweighting layer
+    """
+    def __init__(self, momentum=0.0, truncates = 0.0, **kwargs):
+        super(SOFS, self).__init__(**kwargs)
+        assert(self.idx2name is not None and  len(self.idx2name) != 0)
+
+        self.trunc_percent = {}
+
+        assert isinstance(truncates, dict)
+
+        for param_id, param_name  in self.idx2name.iteritems():
+            if param_name in truncates:
+                self.trunc_percent[param_id] = truncates[param_name]
+
+        self.momentum = momentum
+
+    def create_state(self, index, weight):
+        """Create additional optimizer state such as momentum.
+
+        Parameters
+        ----------
+        weight : NDArray
+            The weight data
+
+        """
+        if self.momentum != 0.0:
+            return zeros(weight.shape, weight.context, dtype=weight.dtype)
+        elif  index in self.trunc_percent:
+            return zeros((weight.shape[0]/2,), weight.context, dtype=weight.dtype)
+        else:
+            return None
+
+    def update(self, index, weight, grad, state):
+        """Update the parameters.
+
+        Parameters
+        ----------
+        index : int
+            An unique integer key used to index the parameters
+
+        weight : NDArray
+            weight ndarray
+
+        grad : NDArray
+            grad ndarray
+
+        state : NDArray or other objects returned by init_state
+            The auxiliary state used in optimization.
+        """
+        assert(isinstance(weight, NDArray))
+        assert(isinstance(grad, NDArray))
+        lr = self._get_lr(index)
+        wd = self._get_wd(index)
+        self._update_count(index)
+
+        grad = grad * self.rescale_grad
+        if self.clip_gradient is not None:
+            grad = clip(grad, -self.clip_gradient, self.clip_gradient)
+
+        #truncate
+        if index in self.trunc_percent:
+            assert len(weight.shape) == 1
+            real_len = weight.shape[0] / 2
+            weights = weight[:real_len]
+            inv_sigma = weight[real_len:]
+
+            weights[:] += -lr * (grad[0:real_len] + wd * weights)
+            argsort(inv_sigma, is_ascend=False, out=state)
+            weights[:] = trunc_array(weights, state, self.trunc_percent[index])
+            weights[:] = clip(weights, -1, 1)
+        else:
+            if state:
+                mom = state
+                mom[:] *= self.momentum
+                mom[:] += -lr * (grad + wd * weight)
+                weight[:] += mom
+            else:
+                assert self.momentum == 0.0
+                weight[:] += -lr * (grad + wd * weight)
+
+
+@register
 class SGDMask(SGD):
     """SGD with Masks .
 

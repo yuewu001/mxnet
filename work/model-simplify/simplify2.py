@@ -3,7 +3,7 @@
 #     File Name           :     train.py
 #     Created By          :     yuewu
 #     Creation Date       :     [2016-12-21 13:57]
-#     Last Modified       :     [2017-02-17 10:17]
+#     Last Modified       :     [2017-02-17 10:18]
 #     Description         :      
 #################################################################################
 
@@ -43,7 +43,7 @@ if __name__ == '__main__':
                        help='truncate threshold')
     parser.set_defaults(
         # network
-        network        = 'vgg_cifar_s',
+        network        = 'vgg_cifar_s2',
         #num_layers     = 110,
         # data
         data_train     = train_fname,
@@ -61,7 +61,7 @@ if __name__ == '__main__':
         lr_step_epochs = '205',
         wd             = 0,
         mom            = 0,
-        optimizer      = 'pet',
+        optimizer      = 'sofs',
     )
     args = parser.parse_args()
 
