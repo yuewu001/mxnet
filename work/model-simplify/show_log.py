@@ -3,7 +3,7 @@
 #     File Name           :     show_log.py
 #     Created By          :     yuewu
 #     Creation Date       :     [2016-10-24 21:44]
-#     Last Modified       :     [2017-02-17 09:43]
+#     Last Modified       :     [2017-03-29 21:42]
 #     Description         :
 #################################################################################
 
@@ -59,6 +59,7 @@ for layer in layers:
     ys.append(y_values)
 
 fig.plot(xs, ys, 'sparsity', 'accuracy', legends=layers,
+         output_path="sofs-cnn-simplify.pdf",
          ylim=[0.86,0.93],clip_on=True)
 #sparsity
 #pattern = re.compile('Epoch\[(\d+)\] Sparsity of (.+)_weights: (\d+\.\d+)')

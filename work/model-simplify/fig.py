@@ -94,6 +94,6 @@ def plot(xs, ys,
     plt.ylabel(y_label,fontsize=18)
     #plt.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
 
-    #plt.savefig(output_path,bbox_inches='tight')
+    plt.savefig(output_path,bbox_inches='tight')
     #logging.info('figure saved to %s' %(output_path))
     plt.show()

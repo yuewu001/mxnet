@@ -5,6 +5,7 @@ import pickle
 from .ndarray import NDArray, zeros, clip, sqrt, trunc, trunc_array, argsort, abs, mask_mul
 from .ndarray import sgd_update, sgd_mom_update, adam_update, rmsprop_update
 from .random import normal
+from .initializer import Normal
 
 
 class Optimizer(object):
@@ -567,6 +568,7 @@ class SOFS(Optimizer):
                 self.trunc_percent[param_id] = truncates[param_name]
 
         self.momentum = momentum
+        self.initializer = Normal(sigma=0.01)
 
     def create_state(self, index, weight):
         """Create additional optimizer state such as momentum.
@@ -621,6 +623,9 @@ class SOFS(Optimizer):
             weights[:] += -lr * (grad[0:real_len] + wd * weights)
             argsort(inv_sigma, is_ascend=False, out=state)
             weights[:] = trunc_array(weights, state, self.trunc_percent[index])
+            self.initializer('weight', state)
+            k = int(real_len * self.trunc_percent[index])
+            weights[k:] = state[k:]
             weights[:] = clip(weights, -1, 1)
         else:
             if state:
