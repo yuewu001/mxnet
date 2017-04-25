@@ -3,20 +3,36 @@
 #     File Name           :     run.sh
 #     Created By          :     yuewu
 #     Creation Date       :     [2017-02-09 16:31]
-#     Last Modified       :     [2017-02-19 15:41]
+#     Last Modified       :     [2017-04-25 19:53]
 #     Description         :
 #################################################################################
 
-for layer in nw1_1 nw1_2 nw2_1 nw2_2 nw3_1 nw3_2 nw3_3
+if [ $# -ne 2 ]; then
+    echo "run_sofs.sh head/tail pet/sofs/sofsrand"
+    exit
+fi
+
+if [ "$1" = "head" ]; then
+    layers="nw1_1 nw1_2 nw2_1 nw2_2 nw3_1 nw3_2 nw3_3"
+    gpu=0
+elif [ "$1" = "tail" ]; then
+    layers="nw4_1 nw4_2 nw4_3 nw5_1 nw5_2 nw5_3"
+    gpu=1
+else
+    echo "run_sofs.sh head/tail"
+    exit
+fi
+
+for layer in $layers
 do
-    #for val in 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
-    for val in 0.05 0.95
+    for percent in 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 0.95
     do
-        python simplify2.py \
-            --pretrained models/pretrain/cifar10 --load-epoch 175 \
-            --model-prefix models/finetune/cifar10 \
-            --gpus 0 \
+        python simplify.py \
+            --pretrained models/pretrain/vgg-cifar10 --load-epoch 200 \
+            --model-prefix models/finetune/"$2"-$layer-$percent \
+            --optimizer "$2" \
+            --gpus $gpu \
             --trunc-layer "$layer"_weights \
-            --trunc-value $val 2>&1 | tee models/finetune/sofs-$layer-$val.log
+            --trunc-value $percent 2>&1 | tee models/finetune/"$2"-$layer-$percent.log
     done
 done

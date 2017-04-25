@@ -3,7 +3,7 @@
 #     File Name           :     train.py
 #     Created By          :     yuewu
 #     Creation Date       :     [2016-12-21 13:57]
-#     Last Modified       :     [2017-02-10 22:05]
+#     Last Modified       :     [2017-04-24 20:41]
 #     Description         :      
 #################################################################################
 
@@ -46,11 +46,12 @@ if __name__ == '__main__':
         # data
         data_train     = train_fname,
         data_val       = val_fname,
+        mean_img       = 'data/mean.bin',
         num_classes    = 10,
         num_examples   = 50000,
         image_shape    = '3,32,32',
         pad_size       = 0,
-        random_corp    = 0,
+        random_crop    = 0,
         # train
         batch_size     = 128,
         num_epochs     = 200,

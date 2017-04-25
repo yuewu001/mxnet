@@ -54,7 +54,7 @@ def epoch_end(args, prefix, period=1):
         if 'truncates' in args:
             for arg_name, arg_val in arg.iteritems():
                 #if arg_name.endswith('_weights'):
-                if arg_name.startswith('conv') and arg_name.endswith('_weight'):
+                if arg_name.startswith('nw') and arg_name.endswith('_weights'):
                     sparsity = float((arg_val.asnumpy()  == 0).sum()) / np.prod(arg_val.shape)
                     logging.info("Epoch[%d] Sparsity of %s: %f", iter_no, arg_name, sparsity)
 
@@ -110,7 +110,7 @@ def add_fit_args(parser):
                         help='log network parameters every N iters if larger than 0')
     train.add_argument('--load-epoch', type=int,
                        help='load the model on an epoch using the model-load-prefix')
-    train.add_argument('--save-period', type=int,default=25,
+    train.add_argument('--save-period', type=int,default=20,
                        help='save model every epochs')
     train.add_argument('--top-k', type=int, default=0,
                        help='report the top-k accuracy. 0 means no report.')

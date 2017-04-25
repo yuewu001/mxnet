@@ -3,11 +3,12 @@
 #     File Name           :     train.py
 #     Created By          :     yuewu
 #     Creation Date       :     [2016-12-21 13:57]
-#     Last Modified       :     [2017-02-17 10:17]
-#     Description         :      
+#     Last Modified       :     [2017-04-25 20:07]
+#     Description         :
 #################################################################################
 
 import os
+import sys
 import argparse
 import logging
 logging.basicConfig(level=logging.DEBUG)
@@ -41,29 +42,37 @@ if __name__ == '__main__':
                        help='name of layers to truncate')
     parser.add_argument('--trunc-value', type=float,
                        help='truncate threshold')
+
     parser.set_defaults(
         # network
-        network        = 'vgg_cifar_s',
+        network        = 'vgg_cifar_s2',
         #num_layers     = 110,
         # data
         data_train     = train_fname,
         data_val       = val_fname,
+        mean_img       = 'data/mean.bin',
         num_classes    = 10,
         num_examples   = 50000,
         image_shape    = '3,32,32',
         pad_size       = 0,
-        random_corp    = 0,
+        random_crop    = 0,
         # train
         batch_size     = 128,
-        num_epochs     = 205,
+        num_epochs     = 220,
         lr             = 1e-2,
         lr_factor      = 1e-1,
-        lr_step_epochs = '205',
+        lr_step_epochs = '220',
         wd             = 0,
-        mom            = 0,
-        optimizer      = 'pet',
+        mom            = 0
     )
     args = parser.parse_args()
+    algorithms = ['pet', 'sofs', 'sofsrand']
+    if args.optimizer not in algorithms:
+        logging.error("optimizer %s not allowd, choices = %s", args.optimizer, str(algorithms))
+        sys.exit()
+
+    if args.optimizer == 'pet':
+        args.network = 'vgg_cifar_s'
 
     # load pretrained model
     sym, arg_params, aux_params = mx.model.load_checkpoint(args.pretrained, args.load_epoch)

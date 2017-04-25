@@ -14,7 +14,7 @@ plt.rc('pdf', fonttype=42)
 def plot(xs, ys,
          x_label,
          y_label,
-         legends,
+         legends=None,
          output_path=None,
          line_width=3,
          marker_size=12,
@@ -27,8 +27,8 @@ def plot(xs, ys,
          legend_cols=2,
          legend_order=201,
          legend_loc='best',
-         bbox_to_anchor=None,
-         draw_legend=True):
+         title=None,
+         bbox_to_anchor=None):
 
     color_list = ['r', 'm', 'k', 'b', (0.12, 0.56, 1), (0.58, 0.66, 0.2), (0.48, 0.41, 0.93),
             (0, 0.75, 0.75)]
@@ -84,7 +84,7 @@ def plot(xs, ys,
         ax.set_ylim(ylim)
 
     ax.grid()
-    if draw_legend:
+    if legends != None:
       l = ax.legend(lines,legends,loc=legend_loc,ncol=legend_cols)
       l.set_zorder(legend_order)
       if bbox_to_anchor != None:
@@ -92,6 +92,8 @@ def plot(xs, ys,
 
     plt.xlabel(x_label,fontsize=18)
     plt.ylabel(y_label,fontsize=18)
+    if title is not None:
+        plt.title(title)
     #plt.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
 
     plt.savefig(output_path,bbox_inches='tight')
