@@ -96,6 +96,7 @@ def plot(xs, ys,
         plt.title(title)
     #plt.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
 
-    plt.savefig(output_path,bbox_inches='tight')
+    if output_path is not None:
+        plt.savefig(output_path,bbox_inches='tight')
     #logging.info('figure saved to %s' %(output_path))
     plt.show()

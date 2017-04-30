@@ -54,7 +54,7 @@ def epoch_end(args, prefix, period=1):
         if 'truncates' in args:
             for arg_name, arg_val in arg.iteritems():
                 #if arg_name.endswith('_weights'):
-                if arg_name.startswith('nw') and arg_name.endswith('_weights'):
+                if arg_name in args.truncates:
                     sparsity = float((arg_val.asnumpy()  == 0).sum()) / np.prod(arg_val.shape)
                     logging.info("Epoch[%d] Sparsity of %s: %f", iter_no, arg_name, sparsity)
 

@@ -655,7 +655,7 @@ class SOFSRand(Optimizer):
         truncate percentage for neuroweighting layer
     """
     def __init__(self, momentum=0.0, truncates = 0.0, **kwargs):
-        super(SOFS, self).__init__(**kwargs)
+        super(SOFSRand, self).__init__(**kwargs)
         assert(self.idx2name is not None and  len(self.idx2name) != 0)
 
         self.trunc_percent = {}
@@ -671,7 +671,7 @@ class SOFSRand(Optimizer):
                 self.trunc_percent[param_id] = truncates[param_name]
 
         self.momentum = momentum
-        self.initializer = Normal(sigma=0.02)
+        self.initializer = Normal(sigma=0.005)
 
     def create_state(self, index, weight):
         """Create additional optimizer state such as momentum.
@@ -756,13 +756,10 @@ class SGDMask(SGD):
     def __init__(self, truncates={}, **kwargs):
         super(SGDMask, self).__init__(**kwargs)
 
-        self.masks = {}
         assert(self.idx2name is not None and  len(self.idx2name) != 0)
-
-        self.masks = {}
-
         assert isinstance(truncates, dict)
 
+        self.masks = {}
         for param_id, param_name  in self.idx2name.iteritems():
             if param_name in truncates:
                 self.masks[param_id] = truncates[param_name]

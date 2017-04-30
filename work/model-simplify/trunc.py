@@ -3,7 +3,7 @@
 #     File Name           :     generate_baseline.py
 #     Created By          :     yuewu
 #     Creation Date       :     [2017-02-14 11:45]
-#     Last Modified       :     [2017-02-16 11:39]
+#     Last Modified       :     [2017-04-30 12:17]
 #     Description         :
 #################################################################################
 import os
@@ -42,21 +42,20 @@ if __name__ == '__main__':
     parser.add_argument('--trunc-value', type=float,
                        help='truncate threshold')
     parser.set_defaults(
-        #num_layers     = 110,
         # data
         data_train     = train_fname,
         data_val       = val_fname,
+        mean_img       = 'data/mean.bin',
         num_classes    = 10,
         num_examples   = 50000,
         image_shape    = '3,32,32',
         pad_size       = 0,
-        random_corp    = 0,
+        random_crop    = 0,
         # train
         batch_size     = 128,
-        num_epochs     = 205,
+        num_epochs     = 200,
         lr             = 1e-2,
-        lr_factor      = 1e-1,
-        lr_step_epochs = '205',
+        lr_factor      = 2,
         wd             = 0,
         mom            = 0,
         optimizer      = 'sgdmask',
