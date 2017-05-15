@@ -478,7 +478,11 @@ class PET(Optimizer):
 
         assert isinstance(truncates, dict)
 
+        self.nw_layers = []
         for param_id, param_name  in self.idx2name.iteritems():
+            if param_name.startswith('nw'):
+                self.nw_layers.append(param_id)
+
             if param_name in truncates:
                 self.trunc_percent[param_id] = truncates[param_name]
 
@@ -532,6 +536,8 @@ class PET(Optimizer):
             argsort(abs(weight), is_ascend=False, out=state)
             weight[:] = trunc_array(weight, state, self.trunc_percent[index])
             weight[:] = clip(weight, -1, 1)
+        elif index in self.nw_layers:
+            pass
         else:
             if state:
                 mom = state
