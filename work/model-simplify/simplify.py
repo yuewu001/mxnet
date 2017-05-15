@@ -3,7 +3,7 @@
 #     File Name           :     train.py
 #     Created By          :     yuewu
 #     Creation Date       :     [2016-12-21 13:57]
-#     Last Modified       :     [2017-04-25 20:07]
+#     Last Modified       :     [2017-04-30 12:18]
 #     Description         :
 #################################################################################
 
@@ -60,8 +60,7 @@ if __name__ == '__main__':
         batch_size     = 128,
         num_epochs     = 220,
         lr             = 1e-2,
-        lr_factor      = 1e-1,
-        lr_step_epochs = '220',
+        lr_factor      = 2,
         wd             = 0,
         mom            = 0
     )

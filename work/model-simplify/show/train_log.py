@@ -3,8 +3,8 @@
 #     File Name           :     show_log.py
 #     Created By          :     yuewu
 #     Creation Date       :     [2016-10-24 21:44]
-#     Last Modified       :     [2017-04-25 10:48]
-#     Description         :
+#     Last Modified       :     [2017-04-29 22:53]
+#     Description         :     show training log
 #################################################################################
 
 
