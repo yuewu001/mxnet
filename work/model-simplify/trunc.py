@@ -3,7 +3,7 @@
 #     File Name           :     generate_baseline.py
 #     Created By          :     yuewu
 #     Creation Date       :     [2017-02-14 11:45]
-#     Last Modified       :     [2017-04-30 12:17]
+#     Last Modified       :     [2017-05-16 22:59]
 #     Description         :
 #################################################################################
 import os
@@ -13,7 +13,6 @@ logging.basicConfig(level=logging.DEBUG)
 from common import find_mxnet, data, fit
 from common.util import download_file
 import mxnet as mx
-import ipdb
 
 def download_cifar10():
     data_dir="data"
@@ -39,7 +38,7 @@ if __name__ == '__main__':
                         help='the pre-trained model')
     parser.add_argument('--trunc-layer', type=str, nargs='+',
                        help='name of layers to truncate')
-    parser.add_argument('--trunc-value', type=float,
+    parser.add_argument('--trunc-value', type=float,nargs='+',
                        help='truncate threshold')
     parser.set_defaults(
         # data
@@ -67,8 +66,11 @@ if __name__ == '__main__':
 
     # train
     args.truncates = {}
-    for trunc_layer in args.trunc_layer:
-        k=int(args.trunc_value * arg_params[trunc_layer].shape[0])
+    assert(len(args.trunc_layer) == len(args.trunc_value))
+    for i in xrange(len(args.trunc_layer)):
+        trunc_layer = args.trunc_layer[i]
+        trunc_value = args.trunc_value[i]
+        k=int(trunc_value * arg_params[trunc_layer].shape[0])
         mask = mx.nd.topk(
             mx.nd.sum(
                 mx.nd.sum(
@@ -80,7 +82,6 @@ if __name__ == '__main__':
             k=k,
             ret_typ='mask')
         args.truncates[trunc_layer] = mask
-
 
     fit.fit(args        = args,
             network     = sym,

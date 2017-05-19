@@ -3,7 +3,7 @@
 #     File Name           :     show_log.py
 #     Created By          :     yuewu
 #     Creation Date       :     [2016-10-24 21:44]
-#     Last Modified       :     [2017-04-24 16:34]
+#     Last Modified       :     [2017-05-16 11:37]
 #     Description         :
 #################################################################################
 
@@ -21,7 +21,7 @@ pattern = re.compile('Epoch\[(\d+)\] Validation-accuracy=(\d+\.\d+)')
 sparsities = [0.05] + np.linspace(0.1,0.9,9).tolist() + [0.95]
 
 layers = ['nw1_1', 'nw1_2', 'nw2_1', 'nw2_2', 'nw3_1', 'nw3_2', 'nw3_3', 'nw4_1', 'nw4_2', 'nw4_3', 'nw5_1', 'nw5_2', 'nw5_3']
-#layers = ['conv1_1', 'conv1_2', 'conv2_1', 'conv2_2', 'conv3_1', 'conv3_2', 'conv3_3', 'conv4_1', 'conv4_2', 'conv4_3', 'conv5_1', 'conv5_2', 'conv5_3']
+layers = ['conv1_1', 'conv1_2', 'conv2_1', 'conv2_2', 'conv3_1', 'conv3_2', 'conv3_3', 'conv4_1', 'conv4_2', 'conv4_3', 'conv5_1', 'conv5_2', 'conv5_3']
 
 #for k,v in sparsity_dict.iteritems():
 #    line, = ax.plot(v['epochs'][start_range:], v['sparsities'][start_range:])
@@ -35,7 +35,7 @@ for layer in layers:
     x_values = []
     y_values = []
     for sparsity in sparsities:
-        path = prefix + '-' + layer + '-' + str(sparsity) + '.log'
+        path = osp.join(prefix, layer + '-' + str(sparsity) + '.log')
 
         if osp.exists(path) == False:
             continue

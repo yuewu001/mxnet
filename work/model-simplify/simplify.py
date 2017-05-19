@@ -3,7 +3,7 @@
 #     File Name           :     train.py
 #     Created By          :     yuewu
 #     Creation Date       :     [2016-12-21 13:57]
-#     Last Modified       :     [2017-04-30 12:18]
+#     Last Modified       :     [2017-05-17 09:26]
 #     Description         :
 #################################################################################
 
@@ -40,7 +40,7 @@ if __name__ == '__main__':
                         help='the pre-trained model')
     parser.add_argument('--trunc-layer', type=str, nargs='+',
                        help='name of layers to truncate')
-    parser.add_argument('--trunc-value', type=float,
+    parser.add_argument('--trunc-value', type=float, nargs='+',
                        help='truncate threshold')
 
     parser.set_defaults(
@@ -83,8 +83,9 @@ if __name__ == '__main__':
 
     # train
     args.truncates = {}
-    for trunc_layer in args.trunc_layer:
-        args.truncates[trunc_layer] = args.trunc_value
+    assert(len(args.trunc_layer) == len(args.trunc_value))
+    for trunc_layer,trunc_value in zip(args.trunc_layer, args.trunc_value):
+        args.truncates[trunc_layer] = trunc_value
     #args.trunc_threshs = {'nw1_1_weights':0.1}
     #args.trunc_percent = {'nw1_1_weights':0.1}
     #args.trunc_threshs = 1e-3 #1e-5

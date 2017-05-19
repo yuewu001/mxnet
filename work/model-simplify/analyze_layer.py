@@ -3,7 +3,7 @@
 #     File Name           :     analyze_layer.py
 #     Created By          :     lixiaodan
 #     Creation Date       :     [2017-04-30 10:57]
-#     Last Modified       :     [2017-04-30 12:01]
+#     Last Modified       :     [2017-05-19 09:23]
 #     Description         :     analyze per-layer accuracy
 #################################################################################
 
@@ -13,12 +13,15 @@ import sys
 import numpy as np
 import os.path as osp
 
-if len(sys.argv) != 2:
-    print 'analyze_layer.py algo'
+if len(sys.argv) != 3:
+    print 'analyze_layer.py algo layer'
     sys.exit()
 
 sparsities = [0.05] + np.linspace(0.1,0.9,9).tolist() + [0.95]
-layers = ['nw1_1', 'nw1_2', 'nw2_1', 'nw2_2', 'nw3_1', 'nw3_2', 'nw3_3', 'nw4_1', 'nw4_2', 'nw4_3', 'nw5_1', 'nw5_2', 'nw5_3']
+if sys.argv[2] == 'all':
+    layers = ['nw1_1', 'nw1_2', 'nw2_1', 'nw2_2', 'nw3_1', 'nw3_2', 'nw3_3', 'nw4_1', 'nw4_2', 'nw4_3', 'nw5_1', 'nw5_2', 'nw5_3']
+else:
+    layers = [sys.argv[2]]
 
 algorithms=['trunc','pet','sofs','sofsrand']
 assert(sys.argv[1] in algorithms)
@@ -33,7 +36,7 @@ res = {}
 for layer in layers:
     res[layer] = []
     for sparsity in reversed(sparsities):
-        logfile='models/finetune/%s-%s-%g.log' %(sys.argv[1],layer,sparsity)
+        logfile='models/finetune/%s/%s-%g.log' %(sys.argv[1],layer,sparsity)
         assert(osp.exists(logfile) == True)
 
         with open(logfile, 'r') as fh:
@@ -49,10 +52,11 @@ for layer in layers:
         assert(len(accuracies) != 0)
         res[layer].append(accuracies[-1])
 
-thresh = 0.9278 * 0.99
-print thresh
+#thresh = 0.9278 * 0.99
+thresh = 0.915
+print 'threshold: ', thresh
 for layer in layers:
-    #print res[layer]
+    print res[layer]
     for k in xrange(len(sparsities)-1,-1,-1):
         if res[layer][k] > thresh:
             print 'layer %s, sparsity %g, accu %f' %(layer, sparsities[k], res[layer][k])
